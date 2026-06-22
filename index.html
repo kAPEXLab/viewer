@@ -3,9 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Markdown Viewer</title>
 
-  <!-- Markdown parser -->
+  <!-- Prevent browser caching -->
+  <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="pragma" content="no-cache" />
+  <meta http-equiv="expires" content="0" />
+
+  <!-- Marked.js -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <style>
@@ -173,15 +179,18 @@
       return url;
     }
 
-    async function loadMarkdownFromLinkFile() {
+    async function loadMarkdownFromConfigRepo() {
       try {
-        // Always fetch latest link.txt
-        const linkResponse = await fetch("./link.txt?v=" + Date.now(), {
+        // Read latest link.txt from md-config repo
+        const linkFileUrl =
+          "https://raw.githubusercontent.com/kAPEXLab/md-config/main/link.txt?v=" + Date.now();
+
+        const linkResponse = await fetch(linkFileUrl, {
           cache: "no-store"
         });
 
         if (!linkResponse.ok) {
-          throw new Error("Unable to read link.txt");
+          throw new Error("Unable to read link.txt from md-config repo");
         }
 
         const mdUrlText = (await linkResponse.text()).trim();
@@ -191,7 +200,7 @@
           throw new Error("link.txt is empty");
         }
 
-        // Always fetch latest markdown file
+        // Fetch latest markdown file
         const separator = mdUrl.includes("?") ? "&" : "?";
         const freshMdUrl = mdUrl + separator + "v=" + Date.now();
 
@@ -208,7 +217,7 @@
         // Render markdown
         contentDiv.innerHTML = marked.parse(markdown);
 
-        // Optional: use first H1 as browser tab title
+        // Set page title from first H1 if available
         const match = markdown.match(/^#\s+(.+)$/m);
         if (match && match[1]) {
           document.title = match[1].trim();
@@ -219,7 +228,7 @@
             <strong>Error loading content.</strong><br><br>
             Please check:
             <ul>
-              <li><code>link.txt</code> exists in the repo root</li>
+              <li><code>link.txt</code> exists in <code>md-config</code> repo</li>
               <li><code>link.txt</code> contains exactly one valid Markdown URL</li>
               <li>the target Markdown file is public</li>
             </ul>
@@ -229,7 +238,7 @@
       }
     }
 
-    loadMarkdownFromLinkFile();
+    loadMarkdownFromConfigRepo();
   </script>
 </body>
 </html>
