@@ -1,1 +1,1 @@
-https://github.com/kAPEXLab/md-viewer/blob/main/uarttime.md
+https://github.com/kAPEXLab/embedded-system-withSTM32/blob/main/exercise_01.md
