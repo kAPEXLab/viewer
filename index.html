@@ -171,7 +171,7 @@
     async function loadMarkdownFromLinkFile() {
       try {
         // Read link.txt from same repo
-        const linkResponse = await fetch("./link.txt");
+        const linkResponse = await fetch("./link.txt?v=" + Date.now(), { cache: "no-store" });
 
         if (!linkResponse.ok) {
           throw new Error("Unable to read link.txt");
@@ -185,7 +185,9 @@
         }
 
         // Fetch markdown file
-        const mdResponse = await fetch(mdUrl);
+        const separator = mdUrl.includes("?") ? "&" : "?";
+        const freshMdUrl = mdUrl + separator + "v=" + Date.now();
+        const mdResponse = await fetch(freshMdUrl, { cache: "no-store" });
 
         if (!mdResponse.ok) {
           throw new Error("Unable to fetch markdown file");
