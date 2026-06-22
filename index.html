@@ -3,17 +3,40 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Viewer Test</title>
+  <title>Markdown Viewer</title>
+
+  <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="pragma" content="no-cache" />
+  <meta http-equiv="expires" content="0" />
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <style>
     body {
       margin: 0;
-      padding: 20px;
       font-family: Arial, sans-serif;
       background: #f6f8fa;
       color: #24292f;
+    }
+
+    .header-logo {
+      text-align: center;
+      background: #ffffff;
+      padding: 16px 0;
+      border-bottom: 1px solid #d0d7de;
+    }
+
+    .header-logo img {
+      max-width: 95%;
+      width: 1000px;
+      height: auto;
+      display: inline-block;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1000px;
+      margin: 24px auto;
     }
 
     #status {
@@ -23,34 +46,119 @@
       border-radius: 8px;
       margin-bottom: 16px;
       white-space: pre-wrap;
+      font-size: 14px;
     }
 
     #content {
       background: white;
       border: 1px solid #d0d7de;
-      border-radius: 8px;
-      padding: 20px;
+      border-radius: 12px;
+      padding: 28px;
+      line-height: 1.7;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      overflow-x: auto;
     }
 
-    pre {
-      background: #f6f8fa;
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+      margin-bottom: 0.6em;
+    }
+
+    p {
+      margin: 0.8em 0;
+    }
+
+    ul, ol {
+      padding-left: 24px;
+    }
+
+    blockquote {
+      margin: 1em 0;
+      padding-left: 16px;
+      border-left: 4px solid #d0d7de;
+      color: #57606a;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1em 0;
+    }
+
+    th, td {
       border: 1px solid #d0d7de;
-      padding: 12px;
-      overflow-x: auto;
-      border-radius: 6px;
+      padding: 8px 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #f6f8fa;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    a {
+      color: #0969da;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #d0d7de;
+      margin: 24px 0;
     }
 
     code {
       background: #f6f8fa;
-      padding: 2px 4px;
+      padding: 2px 6px;
       border-radius: 4px;
+      font-family: Consolas, Monaco, monospace;
+      color: #24292f;
+    }
+
+    pre {
+      background: #f6f8fa;
+      color: #24292f;
+      padding: 14px;
+      border-radius: 6px;
+      overflow-x: auto;
+      border: 1px solid #d0d7de;
+    }
+
+    pre code {
+      background: transparent;
+      padding: 0;
+      color: inherit;
+    }
+
+    .error {
+      background: #ffebe9;
+      border: 1px solid #ff8182;
+      color: #cf222e;
+      padding: 14px;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
-  <h1>Viewer Test</h1>
-  <div id="status">Starting...</div>
-  <div id="content">Waiting to load markdown...</div>
+  <div class="header-logo">
+    <img
+      src="https://raw.githubusercontent.com/kAPEXLab/logos_and_headers/main/Email-Apex%20Lab-KPIT-APRIL2026.jpg"
+      alt="Apex Lab Header"
+    />
+  </div>
+
+  <div class="container">
+    <div id="status">Loading...</div>
+    <div id="content">Waiting to load markdown...</div>
+  </div>
 
   <script>
     const statusEl = document.getElementById("status");
@@ -61,19 +169,40 @@
       console.log(msg);
     }
 
+    function convertToRaw(url) {
+      if (!url) return url;
+      url = url.trim();
+
+      if (url.includes("github.com") && url.includes("/blob/")) {
+        return url
+          .replace("https://github.com/", "https://raw.githubusercontent.com/")
+          .replace("/blob/", "/");
+      }
+
+      return url;
+    }
+
     async function run() {
       try {
-        setStatus("Step 1: Fetching link.txt ...");
+        setStatus("Fetching link.txt ...");
 
-        const linkUrl = "https://raw.githubusercontent.com/kAPEXLab/md-config/main/link.txt?t=" + Date.now();
+        const linkUrl =
+          "https://raw.githubusercontent.com/kAPEXLab/md-config/main/link.txt?t=" + Date.now();
+
         const linkResp = await fetch(linkUrl, { cache: "no-store" });
 
         if (!linkResp.ok) {
           throw new Error("link.txt fetch failed: " + linkResp.status);
         }
 
-        const mdUrl = (await linkResp.text()).trim();
-        setStatus("Step 2: link.txt loaded\n" + mdUrl);
+        const mdUrlRaw = (await linkResp.text()).trim();
+        const mdUrl = convertToRaw(mdUrlRaw);
+
+        if (!mdUrl) {
+          throw new Error("link.txt is empty");
+        }
+
+        setStatus("Loading markdown ...");
 
         const sep = mdUrl.includes("?") ? "&" : "?";
         const mdResp = await fetch(mdUrl + sep + "t=" + Date.now(), { cache: "no-store" });
@@ -83,12 +212,24 @@
         }
 
         const mdText = await mdResp.text();
-        setStatus("Step 3: Markdown fetched successfully\nLength = " + mdText.length);
 
         contentEl.innerHTML = marked.parse(mdText);
+
+        const firstHeading = mdText.match(/^#\s+(.+)$/m);
+        if (firstHeading && firstHeading[1]) {
+          document.title = firstHeading[1].trim();
+        }
+
+        statusEl.style.display = "none";
       } catch (err) {
-        setStatus("ERROR:\n" + err.message);
-        contentEl.textContent = "Load failed. Check browser console.";
+        statusEl.style.display = "block";
+        statusEl.textContent = "Error";
+        contentEl.innerHTML = `
+          <div class="error">
+            <strong>Load failed.</strong><br><br>
+            ${err.message}
+          </div>
+        `;
         console.error(err);
       }
     }
