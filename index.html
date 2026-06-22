@@ -148,7 +148,7 @@
   <div class="header-logo">
     <img
       src="https://raw.githubusercontent.com/kAPEXLab/logos_and_headers/main/Email-Apex%20Lab-KPIT-APRIL2026.jpg"
-      alt="Apex Lab Header"
+      alt="KPIT APEX Lab Header"
     />
   </div>
 
@@ -235,16 +235,16 @@
 
         contentDiv.innerHTML = marked.parse(markdown);
 
-        const match = markdown.match(/^#\s+(.+)$/m);
-        if (match && match[1]) {
-          document.title = match[1].trim();
+        const firstHeadingMatch = markdown.match(/^#\s+(.+)$/m);
+        if (firstHeadingMatch && firstHeadingMatch[1]) {
+          document.title = firstHeadingMatch[1].trim();
         }
       } catch (error) {
         log("ERROR: " + error.message);
         contentDiv.innerHTML = `
           <div class="error">
             <strong>Error loading content.</strong><br><br>
-            Check console + debug box shown above.
+            Check the debug box above.
           </div>
         `;
         console.error(error);
