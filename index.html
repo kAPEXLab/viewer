@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>Markdown Viewer</title>
 
   <!-- Prevent browser caching -->
@@ -122,7 +121,6 @@
       margin: 24px 0;
     }
 
-    /* Inline code */
     code {
       background: #f6f8fa;
       padding: 2px 6px;
@@ -131,7 +129,6 @@
       color: #24292f;
     }
 
-    /* Code blocks */
     pre {
       background: #f6f8fa;
       color: #24292f;
@@ -167,7 +164,6 @@
 
     function convertToRaw(url) {
       if (!url) return url;
-
       url = url.trim();
 
       if (url.includes("github.com") && url.includes("/blob/")) {
@@ -181,7 +177,6 @@
 
     async function loadMarkdownFromConfigRepo() {
       try {
-        // Read latest link.txt from md-config repo
         const linkFileUrl =
           "https://raw.githubusercontent.com/kAPEXLab/md-config/main/link.txt?v=" + Date.now();
 
@@ -200,7 +195,6 @@
           throw new Error("link.txt is empty");
         }
 
-        // Fetch latest markdown file
         const separator = mdUrl.includes("?") ? "&" : "?";
         const freshMdUrl = mdUrl + separator + "v=" + Date.now();
 
@@ -214,10 +208,8 @@
 
         const markdown = await mdResponse.text();
 
-        // Render markdown
         contentDiv.innerHTML = marked.parse(markdown);
 
-        // Set page title from first H1 if available
         const match = markdown.match(/^#\s+(.+)$/m);
         if (match && match[1]) {
           document.title = match[1].trim();
