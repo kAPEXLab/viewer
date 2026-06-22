@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Markdown Viewer</title>
 
-  <!-- Markdown Parser -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <style>
@@ -13,6 +12,7 @@
       margin: 0;
       font-family: Arial, sans-serif;
       background: #f6f8fa;
+      color: #24292f;
     }
 
     header {
@@ -28,29 +28,13 @@
       margin: 20px auto;
     }
 
-    input {
-      width: 75%;
-      padding: 10px;
-      font-size: 14px;
-    }
-
-    button {
-      padding: 10px 15px;
-      background: #0969da;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    button:hover {
-      opacity: 0.9;
-    }
-
     #content {
       background: white;
       padding: 25px;
       border-radius: 10px;
       margin-top: 20px;
+      line-height: 1.7;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
 
     pre {
@@ -58,6 +42,54 @@
       color: #c9d1d9;
       padding: 12px;
       overflow-x: auto;
+      border-radius: 8px;
+    }
+
+    code {
+      background: #f0f3f6;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+
+    pre code {
+      background: transparent;
+      padding: 0;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    table, th, td {
+      border: 1px solid #d0d7de;
+    }
+
+    th, td {
+      padding: 8px 10px;
+      text-align: left;
+    }
+
+    blockquote {
+      border-left: 4px solid #d0d7de;
+      margin-left: 0;
+      padding-left: 16px;
+      color: #57606a;
+    }
+
+    .message {
+      background: #fff8c5;
+      border: 1px solid #eac54f;
+      padding: 14px;
+      border-radius: 8px;
+    }
+
+    .error {
+      background: #ffebe9;
+      border: 1px solid #ff8182;
+      padding: 14px;
+      border-radius: 8px;
+      color: #cf222e;
     }
   </style>
 </head>
@@ -65,37 +97,69 @@
 
 <header>
   <h1>Markdown Viewer</h1>
-  <p>Render any GitHub .md file</p>
 </header>
 
 <div class="container">
-
-  <input id="mdUrl" placeholder="Paste GitHub .md link here">
-  <button onclick="loadMD()">Load</button>
-
-  <div id="content">Markdown content will appear here</div>
-
+  <div id="content">
+    <div class="message">Loading content...</div>
+  </div>
 </div>
 
 <script>
-function convertToRaw(url) {
-  if (url.includes("github.com") && url.includes("/blob/")) {
-    return url
-      .replace("https://github.com/", "https://raw.githubusercontent.com/")
-      .replace("/blob/", "/");
+  function getQueryParam(name) {
+    const params = new URLSearchParams(window.location.search);
+    return params.get(name);
   }
-  return url;
-}
 
-async function loadMD() {
-  const url = document.getElementById("mdUrl").value;
-  const rawUrl = convertToRaw(url);
+  function convertToRaw(url) {
+    if (!url) return url;
 
-  const res = await fetch(rawUrl);
-  const text = await res.text();
+    if (url.includes("github.com") && url.includes("/blob/")) {
+      return url
+        .replace("https://github.com/", "https://raw.githubusercontent.com/")
+        .replace("/blob/", "/");
+    }
 
-  document.getElementById("content").innerHTML = marked.parse(text);
-}
+    return url;
+  }
+
+  async function loadMarkdown() {
+    const mdUrl = getQueryParam("md");
+    const contentDiv = document.getElementById("content");
+
+    if (!mdUrl) {
+      contentDiv.innerHTML = `
+        <div class="error">
+          No markdown file specified.<br><br>
+          Use URL like:<br>
+          <code>?md=https://raw.githubusercontent.com/USER/REPO/main/README.md</code>
+        </div>
+      `;
+      return;
+    }
+
+    const rawUrl = convertToRaw(mdUrl);
+
+    try {
+      const response = await fetch(rawUrl);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch markdown file");
+      }
+
+      const markdown = await response.text();
+      contentDiv.innerHTML = marked.parse(markdown);
+    } catch (err) {
+      contentDiv.innerHTML = `
+        <div class="error">
+          Error loading markdown content.<br><br>
+          Please verify that the file exists and is publicly accessible.
+        </div>
+      `;
+    }
+  }
+
+  loadMarkdown();
 </script>
 
 </body>
